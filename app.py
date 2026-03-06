@@ -68,55 +68,41 @@ if st.button("Scrape Comments"):
                 # driver.execute_script("window.scrollTo(0, 800);")
                 # time.sleep(3)
 
-                # 4. The "Deep Scroll" Maneuver
-                st.info("Scrolling to locate comments...")
-                # Scroll down in increments to mimic a human reading
-                for i in range(3):
-                    driver.execute_script(f"window.scrollTo(0, {500 + (i*500)});")
-                    time.sleep(2)
+                # 4. Deep Scroll & Wait
+                st.info("Hydrating comment section...")
+                driver.execute_script("window.scrollTo(0, 1200);")
+                time.sleep(5) # Give it plenty of time to load the dynamic content
 
-                # 5. Extraction Logic (Updated Selectors for 2026)
-                # We target the specific 'comment-item' class used in the modern feed
-                selectors = [
-                    ".comments-comment-item", 
-                    "article.comments-comment-item",
-                    "div[data-test-id='comment-item']"
+                # 5. Extraction Logic (The '2026 Resilient' Version)
+                # We search for several potential patterns that LinkedIn uses
+                comment_elements = []
+                
+                # Priority 1: Modern data-test attributes
+                # Priority 2: Generic article tags within the comments list
+                # Priority 3: The standard class names
+                search_queries = [
+                    "//article[contains(@class, 'comment')]",
+                    "//div[@data-test-id='comment-item']",
+                    "//*[contains(@class, 'comments-comment-item')]"
                 ]
-                
-                comment_elements = []
-                for selector in selectors:
-                    elements = driver.find_elements(By.CSS_SELECTOR, selector)
-                    if len(elements) > 0:
-                        comment_elements = elements
-                        break
-                
-                # Check for "Load more comments" button if only a few are found
-                try:
-                    load_more = driver.find_element(By.CSS_SELECTOR, "button.comments-comments-list__load-more-comments-button")
-                    if load_more:
-                        driver.execute_script("arguments[0].click();", load_more)
-                        time.sleep(3)
-                        # Re-scan for elements after loading more
-                        comment_elements = driver.find_elements(By.CSS_SELECTOR, selectors[0])
-                except:
-                    pass # No "load more" button found
-                # 5. Extraction Logic
-                # Using a list of selectors in case LinkedIn updates their UI
-                selectors = [".comments-comment-item", "article.comments-comment-item", ".main-content-card"]
-                comment_elements = []
-                
-                for selector in selectors:
-                    elements = driver.find_elements(By.CSS_SELECTOR, selector)
+
+                for query in search_queries:
+                    elements = driver.find_elements(By.XPATH, query)
                     if elements:
                         comment_elements = elements
+                        st.write(f"Match found using: {query}")
                         break
                 
                 comments_list = []
                 for el in comment_elements:
                     try:
-                        author = el.find_element(By.CSS_SELECTOR, ".comments-post-meta__name-text").text.strip()
-                        text = el.find_element(By.CSS_SELECTOR, ".comments-comment-item__main-content").text.strip()
-                        comments_list.append({"Author": author, "Comment": text})
+                        # Using relative XPaths to find name and text inside each comment
+                        # This is much safer than fixed class names
+                        author = el.find_element(By.XPATH, ".//span[contains(@class, 'name-text')] | .//span[contains(@class, 'actor__name')]").text.strip()
+                        text = el.find_element(By.XPATH, ".//*[contains(@class, 'main-content')] | .//*[contains(@class, 'text-body')]").text.strip()
+                        
+                        if author and text:
+                            comments_list.append({"Author": author, "Comment": text})
                     except:
                         continue
 
