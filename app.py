@@ -15,3 +15,19 @@ def get_driver():
     options.binary_location = "/usr/bin/chromium"
     
     return webdriver.Chrome(service=service, options=options)
+
+st.title("LinkedIn Comment Scraper")
+post_url = st.text_input("Enter LinkedIn Post URL:")
+
+if st.button("Scrape Comments"):
+    with st.spinner("Initialising headless browser..."):
+        driver = get_driver()
+        try:
+            driver.get(post_url)
+            # Add your scraping logic here (as shared in previous turn)
+            st.success("Page loaded successfully!")
+            st.write(driver.title)
+        except Exception as e:
+            st.error(f"Error: {e}")
+        finally:
+            driver.quit()
