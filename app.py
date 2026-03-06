@@ -22,6 +22,7 @@ def get_driver():
 st.title("LinkedIn Comment Scraper")
 post_url = st.text_input("Enter LinkedIn Post URL:")
 
+li_at_cookie = st.secrets["li_at_cookie"]
 
 
 if st.button("Scrape Comments"):
@@ -31,6 +32,13 @@ if st.button("Scrape Comments"):
         with st.spinner("Extracting comments..."):
             driver = get_driver()
             try:
+                driver.get("https://www.linkedin.com")
+                
+                driver.add_cookie({
+                    "name": "li_at",
+                    "value": li_at_cookie,
+                    "domain": ".www.linkedin.com"
+                })
                 driver.get(post_url)
                 # Give the page a moment to render JavaScript
                 time.sleep(5) 
