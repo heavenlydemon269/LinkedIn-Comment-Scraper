@@ -65,9 +65,41 @@ if st.button("Scrape Comments"):
                 time.sleep(7) # Increased wait for JS rendering
 
                 # 4. Scroll to trigger lazy-loaded comments
-                driver.execute_script("window.scrollTo(0, 800);")
-                time.sleep(3)
+                # driver.execute_script("window.scrollTo(0, 800);")
+                # time.sleep(3)
 
+                # 4. The "Deep Scroll" Maneuver
+                st.info("Scrolling to locate comments...")
+                # Scroll down in increments to mimic a human reading
+                for i in range(3):
+                    driver.execute_script(f"window.scrollTo(0, {500 + (i*500)});")
+                    time.sleep(2)
+
+                # 5. Extraction Logic (Updated Selectors for 2026)
+                # We target the specific 'comment-item' class used in the modern feed
+                selectors = [
+                    ".comments-comment-item", 
+                    "article.comments-comment-item",
+                    "div[data-test-id='comment-item']"
+                ]
+                
+                comment_elements = []
+                for selector in selectors:
+                    elements = driver.find_elements(By.CSS_SELECTOR, selector)
+                    if len(elements) > 0:
+                        comment_elements = elements
+                        break
+                
+                # Check for "Load more comments" button if only a few are found
+                try:
+                    load_more = driver.find_element(By.CSS_SELECTOR, "button.comments-comments-list__load-more-comments-button")
+                    if load_more:
+                        driver.execute_script("arguments[0].click();", load_more)
+                        time.sleep(3)
+                        # Re-scan for elements after loading more
+                        comment_elements = driver.find_elements(By.CSS_SELECTOR, selectors[0])
+                except:
+                    pass # No "load more" button found
                 # 5. Extraction Logic
                 # Using a list of selectors in case LinkedIn updates their UI
                 selectors = [".comments-comment-item", "article.comments-comment-item", ".main-content-card"]
